@@ -43,7 +43,19 @@ class CortexSearchRetriever(BaseRetriever):
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun
     ) -> List[Document]:
         # call the _aget_relevant_documents method synchronously
-        return run_manager.run(self._aget_relevant_documents, query=query)
+        resp = my_service.search(
+            query=query,
+            columns=["Document_Name", "Text"],
+            # filter={"@eq": {"<column>": "<value>"}},
+            limit=self.k,
+        )
+        return [
+            Document(
+                page_content=doc["Text"],
+                metadata={"Document_Name": doc["Document_Name"]},
+            )
+            for doc in resp.to_dict()["results"]
+        ]
 
     async def _aget_relevant_documents(
         self, query: str, *, run_manager: AsyncCallbackManagerForRetrieverRun
@@ -60,8 +72,14 @@ class CortexSearchRetriever(BaseRetriever):
         # query service
         resp = my_service.search(
             query=query,
-            # columns=["<col1>", "<col2>"],
+            columns=["Document_Name", "Text"],
             # filter={"@eq": {"<column>": "<value>"}},
-            limit=10,
+            limit=self.k,
         )
-        return [Document(text=doc["TEXT"]) for doc in resp.to_dict()["data"]]
+        return [
+            Document(
+                page_content=doc["Text"],
+                metadata={"Document_Name": doc["Document_Name"]},
+            )
+            for doc in resp.to_dict()["results"]
+        ]
