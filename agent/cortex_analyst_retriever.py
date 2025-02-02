@@ -75,7 +75,8 @@ def cortex_analyst_generate(state):
         state (dict): Updates state with generated SQL results
     """
     print("---CORTEX ANALYST LOOKUP---")
-    question = state["question"]
+    question = state.question
     resp = call_cortex_analyst(question)
     result = Document(page_content=resp)
-    return {"data": result, "question": question}
+    state.data.append(result)
+    return {"data": state.data, "question": question}

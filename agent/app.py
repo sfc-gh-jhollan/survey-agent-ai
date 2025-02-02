@@ -9,6 +9,8 @@ from graph_flow import (
     generate_analysis_prompts,
     exec_sql_analysis,
     analyze_results,
+    decide_to_reanalyze,
+    revise_analysis_prompts,
 )
 from graph_state import GraphState
 
@@ -30,6 +32,7 @@ workflow.add_node("generate", generate)
 workflow.add_node("generate_analysis_leads", generate_analysis_prompts)
 workflow.add_node("exec_sql_analysis", exec_sql_analysis)
 workflow.add_node("analyze_results", analyze_results)
+workflow.add_node("revise_analysis_prompts", revise_analysis_prompts)
 # Build graph
 workflow.add_conditional_edges(
     START,
@@ -43,7 +46,14 @@ workflow.add_conditional_edges(
 workflow.add_edge("snowflake_store", "generate")
 workflow.add_edge("doc_store", "generate")
 workflow.add_edge("generate_analysis_leads", "exec_sql_analysis")
-workflow.add_edge("exec_sql_analysis", "analyze_results")
+workflow.add_conditional_edges(
+    "exec_sql_analysis",
+    decide_to_reanalyze,
+    {
+        "revise": "revise_analysis_prompts",
+        "complete": "analyze_results",
+    },
+)
 workflow.add_edge("analyze_results", "generate")
 
 workflow.add_edge("generate", END)
