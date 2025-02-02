@@ -25,9 +25,9 @@ with open("data/survey_model.yaml") as f:
     survey_model = f.read()
 # Prompt
 system = f"""You are an expert at routing a user question to the right next action. You have three options:
-1. snowflake_store: if the question can be answered by querying structured data in Snowflake, this is the right next action.
+1. snowflake_store: if the question can be answered by querying structured data in Snowflake, this is the right next action. Usually a question about trends or survey data that DOES NOT have the word "analyze", "anaylse", or "explore".
 2. doc_store: if the question could be answered by looking into documents indexed in the doc_store, this is the right next action.
-3. data_analysis: if the question requires exploring the data, running multiple queries, and doing larger exploration, data_analysis is the next action. Often includes the words "analyse" or "explore" in question.
+3. data_analysis: if the question requires exploring the data, running multiple queries, and doing larger exploration, data_analysis is the next action. Often includes the words "analyse", "analyze", or "explore" in question.
 Based on the user question, route the question to the most relevant next action.
 
 ### Details
@@ -52,6 +52,9 @@ human: Analyze the survey data to find potential cost savings.
 action: data_analysis
 
 human: Show me the cost trend of our surveys
+action: snowflake_store
+
+human: What's the current trend for survey responses over the last 90 days?
 action: snowflake_store
 """
 route_prompt = ChatPromptTemplate.from_messages(

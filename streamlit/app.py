@@ -43,7 +43,7 @@ def langgraph_stream(prompt):
             and "langgraph_node" in message_chunk[1]
             and message_chunk[1]["langgraph_node"] == "generate"
         ):
-            yield message_chunk[0].content
+            yield message_chunk[0].content.replace("\n", "\n\n")
 
 
 if prompt := st.chat_input("How can I help you today?"):

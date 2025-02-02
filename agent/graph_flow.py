@@ -149,7 +149,15 @@ def generate_analysis_prompts(state, writer: StreamWriter):
         - What is the average, min, and max patient satisfaction score based on visit cost?
         - What is the average, min, and max patient satisfaction score grouped by patient age?
 
-                               
+
+        Questions: Analyze how I can save costs by being more efficient with survey methods with patient surveys
+        Returned 5 Prompts:
+        - What is the cost of survey response by survey method?
+        - What is the survey response rate by age based on survey method?
+        - What is the survey response rate by gender based on survey method?
+        - What is the survey response rate by location based on survey method?
+        - What is the overall likelyhood of response based on survey method?
+                     
         ###
         Context from the current conversation or other additions from agents:
         {context}
