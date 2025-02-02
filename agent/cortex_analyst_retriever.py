@@ -48,10 +48,10 @@ def call_cortex_analyst(question: str) -> str:
         response = resp.json()
         request_id = response["request_id"]
         content = response["message"]["content"]
-        print(content)
+        # print(content)
         for item in content:
             if item["type"] == "sql":
-                print(item["statement"])
+                # print(item["statement"])
                 df = pd.read_sql(item["statement"], connection)
                 result_text = f"SQL Statement: {item['statement']}\n\nResults:\n{df.to_string(index=False)}"
                 cortex_result = result_text

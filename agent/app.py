@@ -13,6 +13,8 @@ from graph_flow import (
     revise_analysis_prompts,
 )
 from graph_state import GraphState
+from langgraph.types import StreamWriter
+
 
 parser = argparse.ArgumentParser(description="Run the survey agent.")
 parser.add_argument(
@@ -62,21 +64,26 @@ workflow.add_edge("generate", END)
 # Compile
 app = workflow.compile()
 
-from pprint import pprint
+# from pprint import pprint
 
 # Run
-inputs = {"question": args.question}
-for output in app.stream(inputs):
-    for key, value in output.items():
-        # Node
-        pprint(f"Node '{key}':")
-        # Optional: print full state at each node
-        # pprint.pprint(value["keys"], indent=2, width=80, depth=None)
-    print("\n---\n")
+# inputs = {"question": args.question}
+# for stream_mode, *chunk in app.stream(inputs, stream_mode=["messages", "custom"]):
+#     message_chunk = chunk[0]
 
-# Final generation
-# if generation exists in value, print generate. If not, just print value
-if "generation" in value:
-    pprint(value["generation"])
-else:
-    pprint(value)
+#     if stream_mode == "custom":
+#         print(message_chunk)
+#     elif (
+#         stream_mode == "messages"
+#         and isinstance(message_chunk[1], dict)
+#         and "langgraph_node" in message_chunk[1]
+#         and message_chunk[1]["langgraph_node"] == "generate"
+#     ):
+#         print(message_chunk[0].content, end="", flush=True)
+
+# # Final generation
+# # if generation exists in value, print generate. If not, just print value
+# if "generation" in value:
+#     pprint(value["generation"])
+# else:
+#     pprint(value)

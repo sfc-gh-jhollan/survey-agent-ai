@@ -3,6 +3,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents.base import Document, Blob
+from langgraph.types import StreamWriter
 
 
 from pydantic import BaseModel, Field
@@ -39,7 +40,7 @@ def retrieve(state):
 ### Edges ###
 
 
-def route_question(state):
+def route_question(state, writer: StreamWriter):
     """
     Route question to snowflake_store or doc_store
 
@@ -49,7 +50,7 @@ def route_question(state):
     Returns:
         str: Next node to call
     """
-
+    writer("Evaluating how to answer question...")
     print("---ROUTE QUESTION---")
     q: str = state.question
     source = question_router.invoke({"question": q})
@@ -96,7 +97,7 @@ def generate(state):
     rag_chain = prompt | llm | StrOutputParser()
     question = state.question
     data = state.data
-    print("DATA ### ", data)
+    # print("DATA ### ", data)
 
     # RAG generation
     generation = rag_chain.invoke({"data": data, "question": question})
@@ -183,7 +184,7 @@ def generate_analysis_prompts(state):
     response = chain.invoke(
         {"context": data, "question": question, "semantic_model": semantic_model}
     )
-    print(response)
+    # print(response)
     analysis_prompts = response.prompts
     return {"data": data, "question": question, "analysis_prompts": analysis_prompts}
 
@@ -237,7 +238,7 @@ def analyze_results(state):
 
     # RAG generation
     response = chain.invoke({"data": data, "question": question})
-    print(response)
+    # print(response)
     data.append(Document(page_content=response.content))
     return {
         "data": data,
@@ -293,7 +294,7 @@ def revise_analysis_prompts(state):
 
     # RAG generation
     response = chain.invoke({"data": data, "question": question})
-    print(response)
+    # print(response)
     data.append(Document(page_content=response.content))
     return {
         "data": data,
