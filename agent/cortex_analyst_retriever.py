@@ -27,18 +27,7 @@ FILE = "survey_model.yaml"
 HOST = "pm.snowflakecomputing.com"
 
 
-def cortex_analyst_generate(state):
-    """
-    Use Cortex Analyst to lookup data within Snowflake
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        state (dict): Updates state with generated SQL results
-    """
-    print("---CORTEX ANALYST LOOKUP---")
-    question = state["question"]
+def call_cortex_analyst(question: str) -> str:
 
     # Cortex Analyst lookup
     """Calls the REST API and returns the response."""
@@ -65,12 +54,28 @@ def cortex_analyst_generate(state):
                 print(item["statement"])
                 df = pd.read_sql(item["statement"], connection)
                 result_text = f"SQL Statement: {item['statement']}\n\nResults:\n{df.to_string(index=False)}"
-                cortex_result = Document(page_content=result_text)
+                cortex_result = result_text
             elif item["type"] == "text":
-                cortex_result = Document(page_content=item["text"])
-
-        return {"data": cortex_result, "question": question}
+                cortex_result = item["text"]
+        return cortex_result
     else:
         raise Exception(
             f"Failed request (id: {request_id}) with status {resp.status_code}: {resp.text}"
         )
+
+
+def cortex_analyst_generate(state):
+    """
+    Use Cortex Analyst to lookup data within Snowflake
+
+    Args:
+        state (dict): The current graph state
+
+    Returns:
+        state (dict): Updates state with generated SQL results
+    """
+    print("---CORTEX ANALYST LOOKUP---")
+    question = state["question"]
+    resp = call_cortex_analyst(question)
+    result = Document(page_content=resp)
+    return {"data": result, "question": question}

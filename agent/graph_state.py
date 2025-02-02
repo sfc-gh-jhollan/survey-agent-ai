@@ -16,3 +16,4 @@ class GraphState(TypedDict):
     question: str
     generation: str
     data: List[str]
+    analysis_prompts: List[str]
