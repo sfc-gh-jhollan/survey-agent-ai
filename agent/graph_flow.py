@@ -198,7 +198,7 @@ def exec_sql_analysis(state):
         analysis_prompts = state.analysis_prompts
         for prompt in analysis_prompts:
             res = call_cortex_analyst(prompt)
-            d.append(Blob(data=res))
+            d.append(Document(page_content=res))
     else:
         raise Exception("No analysis prompts to execute")
     return {
