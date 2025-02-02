@@ -101,10 +101,10 @@ tables:
         description: The patient who received the survey.
         expr: patient_id
         data_type: NUMBER
-      - name: visit_id
-        description: The visit associated with this survey.
-        expr: visit_id
-        data_type: NUMBER
+      # - name: visit_id
+      #   description: The visit associated with this survey.
+      #   expr: visit_id
+      #   data_type: NUMBER
       - name: survey_method
         description: Method of survey distribution (SMS, Email, Phone).
         expr: survey_method
@@ -248,12 +248,12 @@ relationships:
     join_type: left_outer
     relationship_type: many_to_one
 
-  - name: visits_survey_attempts
+  - name: patient_survey_attempts
     left_table: survey_attempts
-    right_table: visits
+    right_table: patients
     relationship_columns:
-      - left_column: visit_id
-        right_column: visit_id
+      - left_column: patient_id
+        right_column: patient_id
     join_type: left_outer
     relationship_type: many_to_one
 
@@ -308,3 +308,45 @@ verified_queries:
       SELECT survey_method, SUM(estimated_cost) AS total_cost
       FROM survey_analytics
       GROUP BY survey_method;
+
+  - name: success_rate_of_phone_surveys
+    question: "What is the success rate of phone surveys by age?"
+    sql: |
+      WITH __survey_attempts AS (
+        SELECT
+          patient_id,
+          survey_method,
+          attempt_success
+        FROM jeffhollan_demo.survey.survey_attempts
+      ), __patients AS (
+        SELECT
+          patient_id,
+          age
+        FROM jeffhollan_demo.survey.patients
+      ), phone_surveys AS (
+        SELECT
+          p.age,
+          sa.attempt_success
+        FROM __survey_attempts AS sa
+        LEFT JOIN __patients AS p
+          ON sa.patient_id = p.patient_id
+        WHERE
+          sa.survey_method = 'Phone'
+      ), response_rates AS (
+        SELECT
+          age,
+          COUNT(attempt_success) AS total_attempts,
+          SUM(CASE WHEN attempt_success = TRUE THEN 1 ELSE 0 END) AS successful_responses
+        FROM phone_surveys
+        GROUP BY
+          age
+      )
+      SELECT
+        age,
+        (
+          successful_responses / NULLIF(CAST(total_attempts AS FLOAT), 0)
+        ) AS response_rate
+      FROM response_rates
+      ORDER BY
+        age
+      ;

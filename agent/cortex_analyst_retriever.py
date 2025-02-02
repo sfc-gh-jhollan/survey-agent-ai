@@ -6,6 +6,8 @@ from langchain_core.callbacks import (
 )
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
+from langgraph.types import StreamWriter
+
 
 import os
 from snowflake.core import Root
@@ -64,7 +66,7 @@ def call_cortex_analyst(question: str) -> str:
         )
 
 
-def cortex_analyst_generate(state):
+def cortex_analyst_generate(state, writer: StreamWriter):
     """
     Use Cortex Analyst to lookup data within Snowflake
 
@@ -75,6 +77,7 @@ def cortex_analyst_generate(state):
         state (dict): Updates state with generated SQL results
     """
     print("---CORTEX ANALYST LOOKUP---")
+    writer("Looking at data in Snowflake...")
     question = state.question
     resp = call_cortex_analyst(question)
     result = Document(page_content=resp)

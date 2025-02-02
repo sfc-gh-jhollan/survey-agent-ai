@@ -19,7 +19,7 @@ retriever = CortexSearchRetriever(
 )
 
 
-def retrieve(state):
+def retrieve(state, writer: StreamWriter):
     """
     Retrieve documents
 
@@ -30,6 +30,7 @@ def retrieve(state):
         state (GraphState): New key added to state, documents, that contains retrieved documents
     """
     print("---RETRIEVE---")
+    writer("Looking at documents...")
     question = state.question
 
     # Retrieval
@@ -65,7 +66,7 @@ def route_question(state, writer: StreamWriter):
         return "data_analysis"
 
 
-def generate(state):
+def generate(state, writer: StreamWriter):
     """
     Generate answer
 
@@ -76,6 +77,7 @@ def generate(state):
         state (GraphState): New key added to state, generation, that contains LLM generation
     """
     print("---GENERATE---")
+    writer("Generating response...")
 
     prompt = ChatPromptTemplate.from_template(
         """
@@ -104,7 +106,7 @@ def generate(state):
     return {"data": data, "question": question, "generation": generation}
 
 
-def generate_analysis_prompts(state):
+def generate_analysis_prompts(state, writer: StreamWriter):
     """
     Based on the question, generate a number of prompts to explore and help answer the analysis
 
@@ -115,6 +117,7 @@ def generate_analysis_prompts(state):
         state (GraphState): New key added to state, analysis_prompts, that contains an array of generated prompts
     """
     print("---GENERATE ANALYSIS PROMPTS---")
+    writer("Exploring data to analyze...")
 
     # Prompt Template
     prompt = ChatPromptTemplate.from_template(
@@ -189,15 +192,20 @@ def generate_analysis_prompts(state):
     return {"data": data, "question": question, "analysis_prompts": analysis_prompts}
 
 
-def exec_sql_analysis(state):
+def exec_sql_analysis(state, writer: StreamWriter):
     print("---EXEC ANALYSIS PROMPTS---")
+    writer("Executing SQL queries to analyze data...")
     if hasattr(state, "data"):
         d = state.data
     else:
         d = []
     if hasattr(state, "analysis_prompts") and len(state.analysis_prompts) > 0:
         analysis_prompts = state.analysis_prompts
+        prompt_lenght = len(analysis_prompts)
+        counter = 0
         for prompt in analysis_prompts:
+            counter = counter + 1
+            writer(f"Executing query {counter} of {prompt_lenght}...")
             res = call_cortex_analyst(prompt)
             d.append(Document(page_content=res))
     else:
@@ -209,8 +217,9 @@ def exec_sql_analysis(state):
     }
 
 
-def analyze_results(state):
+def analyze_results(state, writer: StreamWriter):
     print("---ANALYZE RESULTS OF ANALYSIS PROMPTS---")
+    writer("Analyzing results of data queries...")
     # Prompt Template
     prompt = ChatPromptTemplate.from_template(
         """
@@ -246,7 +255,7 @@ def analyze_results(state):
     }
 
 
-def decide_to_reanalyze(state):
+def decide_to_reanalyze(state, writer: StreamWriter):
     """
     Decide if we should analyze the results or not
 
@@ -256,7 +265,7 @@ def decide_to_reanalyze(state):
     Returns:
         str: Next node to call
     """
-
+    writer("Deciding what to do next...")
     if hasattr(state, "prompts_to_review") and len(state.prompts_to_review) > 0:
         print("---DECIDE TO REVISE---")
         return "revise"
@@ -265,8 +274,9 @@ def decide_to_reanalyze(state):
         return "complete"
 
 
-def revise_analysis_prompts(state):
+def revise_analysis_prompts(state, writer: StreamWriter):
     print("---ANALYZE RESULTS OF ANALYSIS PROMPTS---")
+    writer("Exploring a few more angles...")
     # Prompt Template
     prompt = ChatPromptTemplate.from_template(
         """

@@ -9,7 +9,7 @@ np.random.seed(42)
 # Number of records
 num_patients = 2000
 num_visits = 5000
-num_attempts = 8000
+num_attempts = 30000
 num_responses = 5000
 
 # Generate Patient Table
@@ -18,7 +18,7 @@ for i in range(1, num_patients + 1):
     age = (
         np.random.randint(18, 85) if np.random.rand() > 0.1 else None
     )  # 10% missing age
-    gender = random.choice(["Male", "Female", "Non-Binary"])
+    gender = np.random.choice(["Male", "Female", "Non-Binary"], p=[0.475, 0.475, 0.05])
     location = random.choice(["New York", "Los Angeles", "Chicago", "Houston", "Miami"])
     insurance = random.choice(["Private", "Medicare", "Medicaid", "Uninsured"])
     patients.append([i, age, gender, location, insurance])
@@ -61,7 +61,7 @@ for i in range(1, num_attempts + 1):
     visit_id = (
         np.random.randint(1, num_visits + 1) if np.random.rand() > 0.05 else None
     )  # 5% have no matching visit
-    method = np.random.choice(methods, p=[0.4, 0.4, 0.2])
+    method = np.random.choice(methods, p=[0.3, 0.4, 0.3])
     attempt_date = datetime(2024, 1, 1) + timedelta(days=np.random.randint(0, 180))
     # Get patient age
     age = df_patients.loc[df_patients["Patient_ID"] == patient_id, "Age"].values[0]
@@ -72,20 +72,25 @@ for i in range(1, num_attempts + 1):
             success_rates = {"SMS": 0.1, "Email": 0.1, "Phone": 0.9}  # Favor phone
         elif age < 25:
             success_rates = {
-                "SMS": 0.8,
-                "Email": 0.5,
-                "Phone": 0.1,
+                "SMS": 0.5,
+                "Email": 0.3,
+                "Phone": 0.05,
             }  # Favor SMS & Email
         else:
-            success_rates = {"SMS": 0.5, "Email": 0.6, "Phone": 0.4}  # Default rates
+            success_rates = {"SMS": 0.4, "Email": 0.5, "Phone": 0.2}  # Default rates
     else:
+        print("NO AGE")
         success_rates = {
             "SMS": 0.5,
             "Email": 0.6,
-            "Phone": 0.4,
+            "Phone": 0.2,
         }  # Default if age is missing
 
-    success = np.random.rand() < success_rates[method]
+    rand = np.random.rand()
+    success = rand < success_rates[method]
+    # print(
+    #     f"age: {age}, method: {method}, success: {success} success_rates: {success_rates} rand {rand}"
+    # )
 
     # Introduce duplicate attempts (~2% of records)
     if np.random.rand() < 0.02:
@@ -165,24 +170,21 @@ survey_costs = [
     [
         "SMS Costs",
         round(
-            len(df_survey_attempts[df_survey_attempts["Survey_Method"] == "SMS"])
-            * 0.02,
+            len(df_survey_attempts[df_survey_attempts["Survey_Method"] == "SMS"]) * 2,
             2,
         ),
     ],
     [
         "Email Costs",
         round(
-            len(df_survey_attempts[df_survey_attempts["Survey_Method"] == "Email"])
-            * 0.01,
+            len(df_survey_attempts[df_survey_attempts["Survey_Method"] == "Email"]) * 1,
             2,
         ),
     ],
     [
         "Phone Costs",
         round(
-            len(df_survey_attempts[df_survey_attempts["Survey_Method"] == "Phone"])
-            * 0.04,
+            len(df_survey_attempts[df_survey_attempts["Survey_Method"] == "Phone"]) * 4,
             2,
         ),
     ],
@@ -201,8 +203,10 @@ survey_analytics = (
 if "Visit_ID" not in survey_analytics.columns:
     survey_analytics["Visit_ID"] = np.nan  # Fill missing Visit_IDs explicitly
 
+survey_analytics = survey_analytics.dropna(subset=["Patient_ID"])
+
 survey_analytics["Estimated_Cost"] = survey_analytics["Survey_Method"].map(
-    {"SMS": 0.02, "Email": 0.01, "Phone": 0.04}
+    {"SMS": 2.42, "Email": 1.20, "Phone": 4.40}
 ) * survey_analytics["Attempt_Success"].astype(int)
 
 df_survey_analytics = survey_analytics[

@@ -9,9 +9,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../a
 from agent import app as agent
 
 st.title("Snowflake Intelligence Agent (TEST)")
+chain_of_thought = st.empty()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "status_updates" not in st.session_state:
+    st.session_state.status_updates = []
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -26,7 +30,13 @@ def langgraph_stream(prompt):
         message_chunk = chunk[0]
 
         if stream_mode == "custom":
-            yield message_chunk + "\n"
+            st.session_state.status_updates.append(message_chunk)
+            # loop through all messages in status_updates. Convert into markdown. The first in list (index 0) should be at top, then a line break, then a simple checkmark and the text for the next item, and continue until a full string is generated in markdown
+            chain_of_thought.update(
+                label="\n\n".join(
+                    [f"- {message}" for message in st.session_state.status_updates]
+                )
+            )
         elif (
             stream_mode == "messages"
             and isinstance(message_chunk[1], dict)
@@ -42,7 +52,11 @@ if prompt := st.chat_input("How can I help you today?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        chain_of_thought = st.status("Thinking...")
         stream = langgraph_stream(prompt)
         response = st.write_stream(stream)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
+    # delete chain_of_thought
+    chain_of_thought.update(label="Complete", expanded=False, state="complete")
+    st.session_state.status_updates = []
