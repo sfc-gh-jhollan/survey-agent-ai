@@ -6,4 +6,4 @@ langchainhub
 langchain-openai
 langchain-community
 snowflake
-snowflake-snowpark-python
+snowflake-snowpark-python[modin]

@@ -1,0 +1,238 @@
+# Name and description of the semantic model.
+# '@"JEFFHOLLAN_DEMO"."SURVEY"."MODELS"/survey_model.yaml'
+name: Healthcare Survey Analysis
+description: |
+  This semantic model provides insights into patient survey response patterns, visit trends, and cost analysis.
+  It enables AI-driven recommendations for improving survey efficiency and patient engagement.
+
+# Define logical tables corresponding to the base tables in Snowflake.
+tables:
+  # Patients Table
+  - name: patients
+    description: Contains demographic details of patients.
+    base_table:
+      database: JEFFHOLLAN_DEMO
+      schema: SURVEY
+      table: patients
+    primary_key:
+      columns:
+        - patient_id
+    dimensions:
+      - name: patient_id
+        description: Unique identifier for each patient.
+        expr: patient_id
+        data_type: NUMBER
+        unique: true
+      - name: age
+        description: Age of the patient (may be NULL).
+        expr: age
+        data_type: NUMBER
+      - name: gender
+        description: Gender of the patient.
+        expr: gender
+        data_type: STRING
+      - name: location
+        description: City or region where the patient resides.
+        expr: location
+        data_type: STRING
+      - name: insurance_type
+        description: Type of insurance the patient has.
+        expr: insurance_type
+        data_type: STRING
+
+  # Visits Table
+  - name: visits
+    description: Tracks patient visits, including doctor, reason, and cost.
+    base_table:
+      database: JEFFHOLLAN_DEMO
+      schema: SURVEY
+      table: visits
+    primary_key:
+      columns:
+        - visit_id
+    dimensions:
+      - name: visit_id
+        description: Unique identifier for each visit.
+        expr: visit_id
+        data_type: NUMBER
+        unique: true
+      - name: patient_id
+        description: The patient associated with the visit.
+        expr: patient_id
+        data_type: NUMBER
+      - name: visit_reason
+        description: Reason for the patient visit.
+        expr: visit_reason
+        data_type: STRING
+      - name: visit_outcome
+        description: Outcome of the visit (e.g., discharged, admitted, follow-up needed).
+        expr: visit_outcome
+        data_type: STRING
+    time_dimensions:
+      - name: visit_date
+        description: Date of the visit.
+        expr: visit_date
+        data_type: DATE
+        unique: false
+    measures:
+      - name: visit_cost
+        description: The cost incurred for this visit.
+        expr: visit_cost
+        data_type: NUMBER
+        default_aggregation: sum
+
+  # Survey Attempts Table
+  - name: survey_attempts
+    description: Tracks all survey attempts sent to patients.
+    base_table:
+      database: JEFFHOLLAN_DEMO
+      schema: SURVEY
+      table: survey_attempts
+    primary_key:
+      columns:
+        - attempt_id
+    dimensions:
+      - name: attempt_id
+        description: Unique identifier for each survey attempt.
+        expr: attempt_id
+        data_type: NUMBER
+        unique: true
+      - name: patient_id
+        description: The patient who received the survey.
+        expr: patient_id
+        data_type: NUMBER
+      - name: visit_id
+        description: The visit associated with this survey.
+        expr: visit_id
+        data_type: NUMBER
+      - name: survey_method
+        description: Method of survey distribution (SMS, Email, Phone).
+        expr: survey_method
+        data_type: STRING
+        is_enum: true
+        sample_values: ["SMS", "Email", "Phone"]
+    time_dimensions:
+      - name: attempt_date
+        description: Date the survey was sent.
+        expr: attempt_date
+        data_type: DATE
+    measures:
+      - name: attempt_success
+        description: Whether the survey attempt resulted in a response.
+        expr: attempt_success
+        data_type: BOOLEAN
+        default_aggregation: count
+
+  # Survey Responses Table
+  - name: survey_responses
+    description: Contains completed survey responses and feedback.
+    base_table:
+      database: JEFFHOLLAN_DEMO
+      schema: SURVEY
+      table: survey_responses
+    primary_key:
+      columns:
+        - response_id
+    dimensions:
+      - name: response_id
+        description: Unique identifier for each completed survey response.
+        expr: response_id
+        data_type: NUMBER
+        unique: true
+      - name: attempt_id
+        description: The survey attempt that resulted in this response.
+        expr: attempt_id
+        data_type: NUMBER
+      - name: patient_id
+        description: The patient who completed the survey.
+        expr: patient_id
+        data_type: NUMBER
+      - name: visit_id
+        description: The visit associated with the survey.
+        expr: visit_id
+        data_type: NUMBER
+    time_dimensions:
+      - name: response_date
+        description: Date when the survey response was recorded.
+        expr: response_date
+        data_type: DATE
+    measures:
+      - name: satisfaction_score
+        description: Patient satisfaction rating (1-5).
+        expr: satisfaction_score
+        data_type: NUMBER
+        default_aggregation: avg
+
+  # Survey Costs Table (For Cost Analysis)
+  - name: survey_costs
+    description: Stores various cost factors for survey operations.
+    base_table:
+      database: JEFFHOLLAN_DEMO
+      schema: SURVEY
+      table: survey_costs
+    dimensions:
+      - name: cost_category
+        description: The category of the cost (e.g., SMS Costs, Software Fees).
+        expr: cost_category
+        data_type: STRING
+    time_dimensions:
+      - name: cost_date
+        description: The date the cost was recorded.
+        expr: cost_date
+        data_type: DATE
+    measures:
+      - name: cost_amount
+        description: The cost amount for the given category.
+        expr: cost_amount
+        data_type: NUMBER
+        default_aggregation: sum
+
+# Define relationships between tables
+relationships:
+  - name: patient_visits
+    left_table: visits
+    right_table: patients
+    relationship_columns:
+      - left_column: patient_id
+        right_column: patient_id
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: visits_survey_attempts
+    left_table: survey_attempts
+    right_table: visits
+    relationship_columns:
+      - left_column: visit_id
+        right_column: visit_id
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: attempts_responses
+    left_table: survey_attempts
+    right_table: survey_responses
+    relationship_columns:
+      - left_column: attempt_id
+        right_column: attempt_id
+    join_type: inner
+    relationship_type: many_to_one
+
+# Verified Queries - Example Business Questions
+verified_queries:
+  - name: avg_satisfaction_by_survey_method
+    question: "What is the average patient satisfaction score by survey method?"
+    sql: |
+      SELECT
+        a.survey_method,
+        AVG(r.satisfaction_score) as avg_score
+      FROM
+        survey_responses AS r
+        JOIN survey_attempts AS a ON r.Attempt_ID = a.Attempt_ID
+      GROUP BY
+        Survey_Method;
+
+  - name: cost_breakdown_by_communication_type
+    question: "How much are we spending on each survey communication type?"
+    sql: |
+      SELECT s.Cost_Category, SUM(s.Cost_Amount) AS total_cost
+      FROM survey_costs s
+      GROUP BY Cost_Category;
