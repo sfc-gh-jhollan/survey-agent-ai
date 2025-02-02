@@ -63,7 +63,29 @@ for i in range(1, num_attempts + 1):
     )  # 5% have no matching visit
     method = np.random.choice(methods, p=[0.4, 0.4, 0.2])
     attempt_date = datetime(2024, 1, 1) + timedelta(days=np.random.randint(0, 180))
-    success = np.random.rand() < {"SMS": 0.5, "Email": 0.6, "Phone": 0.4}[method]
+    # Get patient age
+    age = df_patients.loc[df_patients["Patient_ID"] == patient_id, "Age"].values[0]
+
+    # Adjust success rates based on age
+    if age is not None:
+        if age >= 60:
+            success_rates = {"SMS": 0.1, "Email": 0.1, "Phone": 0.9}  # Favor phone
+        elif age < 25:
+            success_rates = {
+                "SMS": 0.8,
+                "Email": 0.5,
+                "Phone": 0.1,
+            }  # Favor SMS & Email
+        else:
+            success_rates = {"SMS": 0.5, "Email": 0.6, "Phone": 0.4}  # Default rates
+    else:
+        success_rates = {
+            "SMS": 0.5,
+            "Email": 0.6,
+            "Phone": 0.4,
+        }  # Default if age is missing
+
+    success = np.random.rand() < success_rates[method]
 
     # Introduce duplicate attempts (~2% of records)
     if np.random.rand() < 0.02:
@@ -197,9 +219,9 @@ df_survey_analytics = survey_analytics[
 ]
 
 # Save to CSV
-df_patients.to_csv("patients.csv", index=False)
-df_visits.to_csv("visits.csv", index=False)
-df_survey_attempts.to_csv("survey_attempts.csv", index=False)
-df_survey_responses.to_csv("survey_responses.csv", index=False)
-df_survey_costs.to_csv("survey_costs.csv", index=False)
-df_survey_analytics.to_csv("survey_analytics.csv", index=False)
+df_patients.to_csv("data/patients.csv", index=False)
+df_visits.to_csv("data/visits.csv", index=False)
+df_survey_attempts.to_csv("data/survey_attempts.csv", index=False)
+df_survey_responses.to_csv("data/survey_responses.csv", index=False)
+df_survey_costs.to_csv("data/survey_costs.csv", index=False)
+df_survey_analytics.to_csv("data/survey_analytics.csv", index=False)
