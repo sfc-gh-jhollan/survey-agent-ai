@@ -7,6 +7,25 @@ description: |
 
 # Define logical tables corresponding to the base tables in Snowflake.
 tables:
+  # Cost trend
+  - name: cost_by_week
+    description: Contains a weekly snapshot of total costs for survey administration
+    base_table:
+      database: JEFFHOLLAN_DEMO
+      schema: SURVEY
+      table: cost_by_week
+    measures:
+      - name: cost
+        description: Weekly cost
+        expr: cost
+        data_type: DOUBLE
+        default_aggregation: sum
+    time_dimensions:
+      - name: date
+        description: Week of the year.
+        expr: date
+        data_type: DATE
+        unique: true
   # Patients Table
   - name: patients
     description: Contains demographic details of patients.
@@ -317,12 +336,12 @@ verified_queries:
           patient_id,
           survey_method,
           attempt_success
-        FROM jeffhollan_demo.survey.survey_attempts
+        FROM __survey_attempts
       ), __patients AS (
         SELECT
           patient_id,
           age
-        FROM jeffhollan_demo.survey.patients
+        FROM __patients
       ), phone_surveys AS (
         SELECT
           p.age,

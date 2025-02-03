@@ -102,8 +102,15 @@ def generate(state, writer: StreamWriter):
     # print("DATA ### ", data)
 
     # RAG generation
-    generation = rag_chain.invoke({"data": data, "question": question})
-    return {"data": data, "question": question, "generation": generation}
+    if question != "Show the weekly snapshot of total costs":
+        generation = rag_chain.invoke({"data": data, "question": question})
+        return {"data": data, "question": question, "generation": generation}
+    else:
+        return {
+            "data": data,
+            "question": question,
+            "generation": "Here is the trend of total costs for the survey.",
+        }
 
 
 def generate_analysis_prompts(state, writer: StreamWriter):
@@ -157,7 +164,7 @@ def generate_analysis_prompts(state, writer: StreamWriter):
         - What is the survey response rate by gender based on survey method?
         - What is the survey response rate by location based on survey method?
         - What is the overall likelyhood of response based on survey method?
-                     
+
         ###
         Context from the current conversation or other additions from agents:
         {context}

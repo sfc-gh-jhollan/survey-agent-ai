@@ -18,6 +18,7 @@ csv_files = [
     "survey_costs.csv",
     "survey_responses.csv",
     "visits.csv",
+    "cost_by_week.csv",
 ]
 
 # Process each CSV file

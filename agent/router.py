@@ -24,7 +24,7 @@ structured_llm_router = llm.with_structured_output(RouteQuery)
 with open("data/survey_model.yaml") as f:
     survey_model = f.read()
 # Prompt
-system = f"""You are an expert at routing a user question to the right next action. You have three options:
+system = f"""You are an expert at routing a user question to the right next action. You have four options:
 1. snowflake_store: if the question can be answered by querying structured data in Snowflake, this is the right next action. Usually a question about trends or survey data that DOES NOT have the word "analyze", "anaylse", or "explore".
 2. doc_store: if the question could be answered by looking into documents indexed in the doc_store, this is the right next action.
 3. data_analysis: if the question requires exploring the data, running multiple queries, and doing larger exploration, data_analysis is the next action. Often includes the words "analyse", "analyze", or "explore" in question.
