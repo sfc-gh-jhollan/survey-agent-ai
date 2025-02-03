@@ -58,9 +58,16 @@ if prompt := st.chat_input("How can I help you today?"):
 
     with st.chat_message("assistant"):
         chain_of_thought = st.status("Thinking...")
+        ###
+        # If I had more time I'd go update my router to do passthrough routing
+        # for generic questions, but for now I'll just hardcode in these demo prompts
+        # so hopefully not stretching too far
+        ###
         if (
             prompt
             == "Draft an email to send to my team on the opportunity and next steps"
+            or prompt
+            == "Given this info can you come up with any ideas we should explore to potentially cut our costs on surveys?"
         ):
             stream = client.chat.completions.create(
                 model="gpt-4o",
@@ -76,6 +83,11 @@ if prompt := st.chat_input("How can I help you today?"):
             response = st.write_stream(stream)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
+    ###
+    # If I had more time I'd go update the graph to suggest a visualization based on the response
+    # as a tool, but it's late so I'm just gonna hardcode in for this query to render as a line chart
+    # cause narratively it helps pull in the BI story parallel
+    ###
     if prompt == "Show the weekly snapshot of total costs":
         import pandas as pd
 
